@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Carros</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+        }
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-color: #444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #player {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 100px;
+            background-color: #00f;
+            border-radius: 10px;
+        }
+        .enemy {
+            position: absolute;
+            top: -100px;
+            width: 50px;
+            height: 100px;
+            background-color: red;
+            border-radius: 10px;
+        }
+        .message {
+            position: absolute;
+            top: 20%;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+            display: none;
+        }
+        #intro-message {
+            position: absolute;
+            top: 30%;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="player"></div>
+    <div class="message" id="game-over-message">¡GAME OVER!</div>
+    <div id="intro-message">Bienvenidos al Juego de Carros! Pulsa cualquier tecla para comenzar.</div>
+</div>
+
+<script>
+    // Configuración del juego
+    const player = document.getElementById('player');
+    const gameContainer = document.querySelector('.game-container');
+    const gameOverMessage = document.getElementById('game-over-message');
+    const introMessage = document.getElementById('intro-message');
+    let gameInterval;
+    let enemyInterval;
+    let isGameOver = false;
+    let playerPositionX = window.innerWidth / 2 - 25;
+    const playerSpeed = 10;
+    const enemySpeed = 5;
+
+    // Posicionar al jugador en el centro inicialmente
+    player.style.left = `${playerPositionX}px`;
+
+    // Mover el jugador con las teclas de flecha
+    document.addEventListener('keydown', (e) => {
+        if (isGameOver) return;  // Si el juego ha terminado, no hacer nada
+
+        if (introMessage.style.display !== 'none') {
+            // Escondemos la pantalla de bienvenida cuando se presiona una tecla
+            introMessage.style.display = 'none';
+            startGame();  // Comenzamos el juego
+        }
+
+        if (e.key === 'ArrowLeft' && playerPositionX > 0) {
+            playerPositionX -= playerSpeed;
+        }
+        if (e.key === 'ArrowRight' && playerPositionX < window.innerWidth - 50) {
+            playerPositionX += playerSpeed;
+        }
+        player.style.left = `${playerPositionX}px`;
+    });
+
+    // Función para crear un nuevo enemigo
+    function createEnemy() {
+        const enemy = document.createElement('div');
+        enemy.classList.add('enemy');
+        const enemyPositionX = Math.floor(Math.random() * (window.innerWidth - 50));
+        enemy.style.left = `${enemyPositionX}px`;
+        gameContainer.appendChild(enemy);
+        moveEnemy(enemy);
+    }
+
+    // Función para mover el enemigo hacia abajo
+    function moveEnemy(enemy) {
+        let enemyPositionY = -100;
+        const enemyMove = setInterval(() => {
+            if (isGameOver) {
+                clearInterval(enemyMove);
+                return;
+            }
+            enemyPositionY += enemySpeed;
+            enemy.style.top = `${enemyPositionY}px`;
+
+            // Detectar colisión con el jugador
+            if (detectCollision(player, enemy)) {
+                endGame();
+            }
+
+            // Eliminar enemigo cuando se sale de la pantalla
+            if (enemyPositionY >= window.innerHeight) {
+                clearInterval(enemyMove);
+                gameContainer.removeChild(enemy);
+            }
+        }, 20);
+    }
+
+    // Función para detectar la colisión entre el jugador y un enemigo
+    function detectCollision(player, enemy) {
+        const playerRect = player.getBoundingClientRect();
+        const enemyRect = enemy.getBoundingClientRect();
+
+        return !(
+            playerRect.top > enemyRect.bottom ||
+            playerRect.bottom < enemyRect.top ||
+            playerRect.left > enemyRect.right ||
+            playerRect.right < enemyRect.left
+        );
+    }
+
+    // Fin del juego
+    function endGame() {
+        isGameOver = true;
+        gameOverMessage.style.display = 'block';
+        clearInterval(gameInterval);
+        clearInterval(enemyInterval);
+    }
+
+    // Iniciar el juego
+    function startGame() {
+        gameInterval = setInterval(createEnemy, 2000); // Crear enemigo cada 2 segundos
+        enemyInterval = setInterval(() => {
+            if (!isGameOver) {
+                createEnemy();
+            }
+        }, 2000);
+    }
+
+</script>
+
+</body>
+</html>
